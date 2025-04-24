@@ -19,21 +19,20 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <memory>
+#include <functional>
 #include <optional>
+#include <string>
+#include <string_view>
 #include <utility>
 
 #include "src/trace_processor/containers/null_term_string_view.h"
-#include "src/trace_processor/containers/string_pool.h"
 #include "src/trace_processor/dataframe/cursor.h"
 #include "src/trace_processor/dataframe/dataframe.h"
 #include "src/trace_processor/dataframe/value_fetcher.h"
-#include "src/trace_processor/perfetto_sql/engine/dataframe_shared_storage.h"
 #include "src/trace_processor/sqlite/bindings/sqlite_module.h"
 #include "src/trace_processor/sqlite/bindings/sqlite_result.h"
 #include "src/trace_processor/sqlite/bindings/sqlite_type.h"
 #include "src/trace_processor/sqlite/bindings/sqlite_value.h"
-#include "src/trace_processor/sqlite/module_state_manager.h"
 
 namespace perfetto::trace_processor {
 
@@ -44,15 +43,11 @@ struct DataframeModule : sqlite::Module<DataframeModule> {
   static constexpr bool kSupportsWrites = false;
   static constexpr bool kDoesOverloadFunctions = false;
 
-  struct State {
-    explicit State(std::shared_ptr<const dataframe::Dataframe> _dataframe)
-        : dataframe(std::move(_dataframe)) {}
-    std::shared_ptr<const dataframe::Dataframe> dataframe;
-  };
-  struct Context : sqlite::ModuleStateManager<DataframeModule> {
-    explicit Context(DataframeSharedStorage* _dataframe_shared_storage)
-        : dataframe_shared_storage(_dataframe_shared_storage) {}
-    DataframeSharedStorage* dataframe_shared_storage;
+  struct Context {
+    explicit Context(
+        std::function<const dataframe::Dataframe*(std::string_view)> _df_fn)
+        : df_fn(std::move(_df_fn)) {}
+    std::function<const dataframe::Dataframe*(std::string_view)> df_fn;
   };
   struct SqliteValueFetcher : dataframe::ValueFetcher {
     using Type = sqlite::Type;
@@ -87,8 +82,8 @@ struct DataframeModule : sqlite::Module<DataframeModule> {
     sqlite3_context* ctx;
   };
   struct Vtab : sqlite::Module<DataframeModule>::Vtab {
-    sqlite::ModuleStateManager<DataframeModule>::PerVtabState* state;
-    const dataframe::Dataframe* dataframe;
+    std::string table_name;
+    std::function<const dataframe::Dataframe*(std::string_view)> df_fn;
   };
   using DfCursor = dataframe::Cursor<SqliteValueFetcher>;
   struct Cursor : sqlite::Module<DataframeModule>::Cursor {

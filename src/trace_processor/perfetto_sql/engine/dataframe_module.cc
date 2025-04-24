@@ -27,15 +27,12 @@
 #include <utility>
 #include <vector>
 
-#include "perfetto/base/compiler.h"
 #include "perfetto/base/logging.h"
-#include "perfetto/ext/base/string_utils.h"
+#include "perfetto/public/compiler.h"
 #include "src/trace_processor/dataframe/dataframe.h"
 #include "src/trace_processor/dataframe/specs.h"
-#include "src/trace_processor/perfetto_sql/engine/dataframe_shared_storage.h"
 #include "src/trace_processor/sqlite/bindings/sqlite_type.h"
 #include "src/trace_processor/sqlite/bindings/sqlite_value.h"
-#include "src/trace_processor/sqlite/module_state_manager.h"
 #include "src/trace_processor/sqlite/sqlite_utils.h"
 
 namespace perfetto::trace_processor {
@@ -101,34 +98,24 @@ int DataframeModule::Create(sqlite3* db,
                             const char* const* argv,
                             sqlite3_vtab** vtab,
                             char**) {
-  // SQLite automatically should provide the first three arguments. And the
-  // fourth argument should be the tag hash of the dataframe from the engine.
-  PERFETTO_CHECK(argc == 4);
-
-  std::optional<uint64_t> tag_hash = base::CStringToUInt64(argv[3]);
-  PERFETTO_CHECK(tag_hash);
+  // SQLite automatically should provide the first three arguments.
+  PERFETTO_CHECK(argc == 3);
 
   auto* ctx = GetContext(raw_ctx);
-  auto table = ctx->dataframe_shared_storage->Find(
-      DataframeSharedStorage::Tag{*tag_hash});
-  PERFETTO_CHECK(table);
-
-  std::string create_stmt = CreateTableStmt(table->CreateColumnSpecs());
+  const auto* df = ctx->df_fn(argv[2]);
+  std::string create_stmt = CreateTableStmt(df->CreateColumnSpecs());
   if (int r = sqlite3_declare_vtab(db, create_stmt.c_str()); r != SQLITE_OK) {
     return r;
   }
-  std::unique_ptr<Vtab> res = std::make_unique<Vtab>();
-  res->dataframe = table.get();
-  auto* state =
-      ctx->OnCreate(argc, argv, std::make_unique<State>(std::move(table)));
-  res->state = state;
-  *vtab = res.release();
+  auto tab = std::make_unique<Vtab>();
+  tab->table_name = argv[2];
+  tab->df_fn = ctx->df_fn;
+  *vtab = tab.release();
   return SQLITE_OK;
 }
 
 int DataframeModule::Destroy(sqlite3_vtab* vtab) {
   std::unique_ptr<Vtab> v(GetVtab(vtab));
-  sqlite::ModuleStateManager<DataframeModule>::OnDestroy(v->state);
   return SQLITE_OK;
 }
 
@@ -138,35 +125,28 @@ int DataframeModule::Connect(sqlite3* db,
                              const char* const* argv,
                              sqlite3_vtab** vtab,
                              char**) {
-  // SQLite automatically should provide the first three arguments. And the
-  // fourth argument should be the type of the tag of the dataframe which the
-  // engine should always provide.
-  PERFETTO_CHECK(argc >= 4);
+  // SQLite automatically should provide the first three arguments.
+  PERFETTO_CHECK(argc == 3);
 
-  auto* vtab_state = GetContext(raw_ctx)->OnConnect(argc, argv);
-  auto* state =
-      sqlite::ModuleStateManager<DataframeModule>::GetState(vtab_state);
-  std::string create_stmt =
-      CreateTableStmt(state->dataframe->CreateColumnSpecs());
+  auto* ctx = GetContext(raw_ctx);
+  const auto* df = ctx->df_fn(argv[2]);
+  std::string create_stmt = CreateTableStmt(df->CreateColumnSpecs());
   if (int r = sqlite3_declare_vtab(db, create_stmt.c_str()); r != SQLITE_OK) {
     return r;
   }
-  std::unique_ptr<Vtab> res = std::make_unique<Vtab>();
-  res->dataframe = state->dataframe.get();
-  res->state = vtab_state;
-  *vtab = res.release();
+  auto tab = std::make_unique<Vtab>();
+  tab->table_name = argv[2];
+  tab->df_fn = ctx->df_fn;
+  *vtab = tab.release();
   return SQLITE_OK;
 }
 
 int DataframeModule::Disconnect(sqlite3_vtab* vtab) {
   std::unique_ptr<Vtab> v(GetVtab(vtab));
-  sqlite::ModuleStateManager<DataframeModule>::OnDisconnect(v->state);
   return SQLITE_OK;
 }
 
 int DataframeModule::BestIndex(sqlite3_vtab* tab, sqlite3_index_info* info) {
-  auto* v = GetVtab(tab);
-
   std::vector<dataframe::FilterSpec> filter_specs;
   dataframe::LimitSpec limit_spec;
   filter_specs.reserve(static_cast<size_t>(info->nConstraint));
@@ -246,10 +226,11 @@ int DataframeModule::BestIndex(sqlite3_vtab* tab, sqlite3_index_info* info) {
   }
   info->orderByConsumed = true;
 
-  SQLITE_ASSIGN_OR_RETURN(
-      tab, auto plan,
-      v->dataframe->PlanQuery(filter_specs, distinct_specs, sort_specs,
-                              limit_spec, info->colUsed));
+  auto* v = GetVtab(tab);
+  const auto* df = v->df_fn(v->table_name);
+  SQLITE_ASSIGN_OR_RETURN(tab, auto plan,
+                          df->PlanQuery(filter_specs, distinct_specs,
+                                        sort_specs, limit_spec, info->colUsed));
   for (const auto& c : filter_specs) {
     if (auto value_index = c.value_index; value_index) {
       info->aConstraintUsage[c.source_index].argvIndex =
@@ -267,8 +248,10 @@ int DataframeModule::BestIndex(sqlite3_vtab* tab, sqlite3_index_info* info) {
   return SQLITE_OK;
 }
 
-int DataframeModule::Open(sqlite3_vtab*, sqlite3_vtab_cursor** cursor) {
+int DataframeModule::Open(sqlite3_vtab* tab, sqlite3_vtab_cursor** cursor) {
+  auto* v = GetVtab(tab);
   std::unique_ptr<Cursor> c = std::make_unique<Cursor>();
+  c->dataframe = v->df_fn(v->table_name);
   *cursor = c.release();
   return SQLITE_OK;
 }
@@ -283,11 +266,10 @@ int DataframeModule::Filter(sqlite3_vtab_cursor* cur,
                             const char* idxStr,
                             int,
                             sqlite3_value** argv) {
-  auto* v = GetVtab(cur->pVtab);
   auto* c = GetCursor(cur);
-  if (idxStr != c->last_idx_str) {
-    auto plan = dataframe::Dataframe::QueryPlan::Deserialize(idxStr);
-    v->dataframe->PrepareCursor(plan, c->df_cursor);
+  if (PERFETTO_UNLIKELY(idxStr != c->last_idx_str)) {
+    c->dataframe->PrepareCursor(
+        dataframe::Dataframe::QueryPlan::Deserialize(idxStr), c->df_cursor);
     c->last_idx_str = idxStr;
   }
   SqliteValueFetcher fetcher{{}, argv};

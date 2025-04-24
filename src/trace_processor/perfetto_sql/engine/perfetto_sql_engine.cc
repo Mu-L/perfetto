@@ -47,6 +47,7 @@
 #include "src/trace_processor/perfetto_sql/engine/created_function.h"
 #include "src/trace_processor/perfetto_sql/engine/dataframe_module.h"
 #include "src/trace_processor/perfetto_sql/engine/dataframe_shared_storage.h"
+#include "src/trace_processor/perfetto_sql/engine/dataframe_storage_module.h"
 #include "src/trace_processor/perfetto_sql/engine/runtime_table_function.h"
 #include "src/trace_processor/perfetto_sql/intrinsics/table_functions/static_table_function.h"
 #include "src/trace_processor/perfetto_sql/parser/function_util.h"
@@ -355,10 +356,15 @@ PerfettoSqlEngine::PerfettoSqlEngine(StringPool* pool,
                                                std::move(ctx));
   }
   {
-    auto ctx =
-        std::make_unique<DataframeModule::Context>(dataframe_shared_storage_);
+    auto ctx = std::make_unique<DataframeModule::Context>(
+        [](std::string_view) { return nullptr; });
     RegisterVirtualTableModule<DataframeModule>("__intrinsic_dataframe",
                                                 std::move(ctx));
+  }
+  {
+    auto ctx = std::make_unique<DataframeStorageModule::Context>();
+    RegisterVirtualTableModule<DataframeStorageModule>(
+        "__intrinsic_dataframe_storage", std::move(ctx));
   }
 }
 
