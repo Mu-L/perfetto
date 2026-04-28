@@ -3070,6 +3070,7 @@ perfetto_filegroup(
     srcs = [
         "src/trace_processor/importers/proto/packet_sequence_state_generation.h",
         "src/trace_processor/importers/proto/track_event_sequence_state.h",
+        "src/trace_processor/importers/proto/track_event_thread_descriptor.h",
     ],
 )
 
