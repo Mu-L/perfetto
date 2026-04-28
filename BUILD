@@ -519,6 +519,7 @@ perfetto_cc_library(
                ":protos_perfetto_trace_filesystem_zero",
                ":protos_perfetto_trace_ftrace_zero",
                ":protos_perfetto_trace_generic_kernel_zero",
+               ":protos_perfetto_trace_gpu_gpu_interned_data_zero",
                ":protos_perfetto_trace_gpu_gpu_track_event_zero",
                ":protos_perfetto_trace_gpu_zero",
                ":protos_perfetto_trace_interned_data_zero",
@@ -550,6 +551,7 @@ perfetto_cc_library(
                ":src_trace_processor_containers_containers",
                ":src_trace_processor_importers_proto_gen_cc_android_track_event_descriptor",
                ":src_trace_processor_importers_proto_gen_cc_chrome_track_event_descriptor",
+               ":src_trace_processor_importers_proto_gen_cc_gpu_interned_data_descriptor",
                ":src_trace_processor_importers_proto_gen_cc_gpu_track_event_descriptor",
                ":src_trace_processor_importers_proto_gen_cc_statsd_atoms_descriptor",
                ":src_trace_processor_importers_proto_gen_cc_trace_descriptor",
@@ -753,6 +755,7 @@ perfetto_cc_library(
                ":protos_perfetto_trace_filesystem_zero",
                ":protos_perfetto_trace_ftrace_zero",
                ":protos_perfetto_trace_generic_kernel_zero",
+               ":protos_perfetto_trace_gpu_gpu_interned_data_zero",
                ":protos_perfetto_trace_gpu_gpu_track_event_zero",
                ":protos_perfetto_trace_gpu_zero",
                ":protos_perfetto_trace_interned_data_zero",
@@ -785,6 +788,7 @@ perfetto_cc_library(
                ":src_trace_processor_containers_containers",
                ":src_trace_processor_importers_proto_gen_cc_android_track_event_descriptor",
                ":src_trace_processor_importers_proto_gen_cc_chrome_track_event_descriptor",
+               ":src_trace_processor_importers_proto_gen_cc_gpu_interned_data_descriptor",
                ":src_trace_processor_importers_proto_gen_cc_gpu_track_event_descriptor",
                ":src_trace_processor_importers_proto_gen_cc_statsd_atoms_descriptor",
                ":src_trace_processor_importers_proto_gen_cc_trace_descriptor",
@@ -2922,6 +2926,17 @@ perfetto_cpp_blob_header(
         "perfetto",
         "--symbol-suffix",
         "Descriptor",
+    ],
+)
+
+# GN target: //src/trace_processor/importers/proto:gen_cc_gpu_interned_data_descriptor
+perfetto_cc_proto_descriptor(
+    name = "src_trace_processor_importers_proto_gen_cc_gpu_interned_data_descriptor",
+    deps = [
+        ":protos_perfetto_trace_gpu_gpu_interned_data_descriptor",
+    ],
+    outs = [
+        "src/trace_processor/importers/proto/gpu_interned_data.descriptor.h",
     ],
 )
 
@@ -7871,6 +7886,61 @@ perfetto_cc_protozero_library(
     ],
 )
 
+# GN target: //protos/perfetto/trace/gpu:gpu_interned_data_descriptor
+perfetto_proto_descriptor(
+    name = "protos_perfetto_trace_gpu_gpu_interned_data_descriptor",
+    deps = [
+        ":protos_perfetto_trace_gpu_gpu_interned_data_protos",
+    ],
+    outs = [
+        "protos_perfetto_trace_gpu_gpu_interned_data_descriptor.bin",
+    ],
+)
+
+# GN target: //protos/perfetto/trace/gpu:gpu_interned_data_source_set
+perfetto_proto_library(
+    name = "protos_perfetto_trace_gpu_gpu_interned_data_protos",
+    srcs = [
+        "protos/perfetto/trace/gpu/gpu_interned_data.proto",
+    ],
+    visibility = [
+        PERFETTO_CONFIG.proto_library_visibility,
+    ],
+    deps = [
+        ":protos_perfetto_common_protos",
+        ":protos_perfetto_protovm_protos",
+        ":protos_perfetto_trace_android_protos",
+        ":protos_perfetto_trace_android_winscope_common_protos",
+        ":protos_perfetto_trace_android_winscope_regular_protos",
+        ":protos_perfetto_trace_chrome_protos",
+        ":protos_perfetto_trace_gpu_protos",
+        ":protos_perfetto_trace_interned_data_protos",
+        ":protos_perfetto_trace_profiling_protos",
+        ":protos_perfetto_trace_track_event_protos",
+    ],
+    exports = [
+        ":protos_perfetto_trace_interned_data_protos",
+    ],
+)
+
+# GN target: //protos/perfetto/trace/gpu:gpu_interned_data_zero
+perfetto_cc_protozero_library(
+    name = "protos_perfetto_trace_gpu_gpu_interned_data_zero",
+    deps = [
+        ":protos_perfetto_common_zero",
+        ":protos_perfetto_protovm_zero",
+        ":protos_perfetto_trace_android_winscope_common_zero",
+        ":protos_perfetto_trace_android_winscope_regular_zero",
+        ":protos_perfetto_trace_android_zero",
+        ":protos_perfetto_trace_chrome_zero",
+        ":protos_perfetto_trace_gpu_gpu_interned_data_protos",
+        ":protos_perfetto_trace_gpu_zero",
+        ":protos_perfetto_trace_interned_data_zero",
+        ":protos_perfetto_trace_profiling_zero",
+        ":protos_perfetto_trace_track_event_zero",
+    ],
+)
+
 # GN target: //protos/perfetto/trace/gpu:gpu_track_event_descriptor
 perfetto_proto_descriptor(
     name = "protos_perfetto_trace_gpu_gpu_track_event_descriptor",
@@ -9084,6 +9154,7 @@ perfetto_cc_library(
                ":protos_perfetto_trace_filesystem_zero",
                ":protos_perfetto_trace_ftrace_zero",
                ":protos_perfetto_trace_generic_kernel_zero",
+               ":protos_perfetto_trace_gpu_gpu_interned_data_zero",
                ":protos_perfetto_trace_gpu_gpu_track_event_zero",
                ":protos_perfetto_trace_gpu_zero",
                ":protos_perfetto_trace_interned_data_zero",
@@ -9114,6 +9185,7 @@ perfetto_cc_library(
                ":src_trace_processor_containers_containers",
                ":src_trace_processor_importers_proto_gen_cc_android_track_event_descriptor",
                ":src_trace_processor_importers_proto_gen_cc_chrome_track_event_descriptor",
+               ":src_trace_processor_importers_proto_gen_cc_gpu_interned_data_descriptor",
                ":src_trace_processor_importers_proto_gen_cc_gpu_track_event_descriptor",
                ":src_trace_processor_importers_proto_gen_cc_statsd_atoms_descriptor",
                ":src_trace_processor_importers_proto_gen_cc_trace_descriptor",
@@ -9325,6 +9397,7 @@ perfetto_cc_binary(
                ":protos_perfetto_trace_filesystem_zero",
                ":protos_perfetto_trace_ftrace_zero",
                ":protos_perfetto_trace_generic_kernel_zero",
+               ":protos_perfetto_trace_gpu_gpu_interned_data_zero",
                ":protos_perfetto_trace_gpu_gpu_track_event_zero",
                ":protos_perfetto_trace_gpu_zero",
                ":protos_perfetto_trace_interned_data_zero",
@@ -9356,6 +9429,7 @@ perfetto_cc_binary(
                ":src_trace_processor_containers_containers",
                ":src_trace_processor_importers_proto_gen_cc_android_track_event_descriptor",
                ":src_trace_processor_importers_proto_gen_cc_chrome_track_event_descriptor",
+               ":src_trace_processor_importers_proto_gen_cc_gpu_interned_data_descriptor",
                ":src_trace_processor_importers_proto_gen_cc_gpu_track_event_descriptor",
                ":src_trace_processor_importers_proto_gen_cc_statsd_atoms_descriptor",
                ":src_trace_processor_importers_proto_gen_cc_trace_descriptor",
