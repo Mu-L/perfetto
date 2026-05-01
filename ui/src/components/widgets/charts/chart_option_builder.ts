@@ -138,6 +138,8 @@ export function buildTooltipOption(
   extra?: Record<string, unknown>,
 ): Record<string, unknown> {
   return {
+    showDelay: 0,
+    transitionDuration: 0,
     ...extra,
   };
 }
