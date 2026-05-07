@@ -24,18 +24,24 @@ export function setTracedSocket(socket: string) {
   tracedSocket = socket;
 }
 
-export async function createAdbTracingSession(
+export function createAdbTracingSession(
   adbDevice: AdbDevice,
   traceConfig: protos.ITraceConfig,
 ): Promise<Result<ConsumerIpcTracingSession>> {
+  return ConsumerIpcTracingSession.create({
+    ipcFactory: () => openAdbConsumerIpc(adbDevice),
+    traceConfig,
+  });
+}
+
+async function openAdbConsumerIpc(
+  adbDevice: AdbDevice,
+): Promise<Result<TracingProtocol>> {
   const streamStatus = await adbDevice.createStream(
     getTracedConsumerSocketAddressForAdb(),
   );
   if (!streamStatus.ok) return streamStatus;
-  const stream = streamStatus.value;
-  const consumerIpc = await TracingProtocol.create(stream);
-  const session = new ConsumerIpcTracingSession(consumerIpc, traceConfig);
-  return okResult(session);
+  return okResult(await TracingProtocol.create(streamStatus.value));
 }
 
 export async function getAdbTracingServiceState(
