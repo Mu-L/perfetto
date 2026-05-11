@@ -1223,6 +1223,7 @@ TraceProcessorImpl::GetStaticTables(TraceStorage* storage) {
   AddStaticTable(tables, storage->mutable_thread_table());
   AddStaticTable(tables, storage->mutable_process_table());
   AddStaticTable(tables, storage->mutable_cpu_table());
+  AddStaticTable(tables, storage->mutable_interrupt_mapping_table());
   AddStaticTable(tables, storage->mutable_sched_slice_table());
   AddStaticTable(tables, storage->mutable_thread_state_table());
   AddStaticTable(tables, storage->mutable_track_table());

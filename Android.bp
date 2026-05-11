@@ -3621,6 +3621,7 @@ filegroup {
         "protos/perfetto/trace/sys_stats/sys_stats.proto",
         "protos/perfetto/trace/system_info/cpu_info.proto",
         "protos/perfetto/trace/system_info/gpu_info.proto",
+        "protos/perfetto/trace/system_info/interrupt_info.proto",
         "protos/perfetto/trace/test_event.proto",
         "protos/perfetto/trace/test_extensions.proto",
         "protos/perfetto/trace/trace.proto",
@@ -8900,6 +8901,7 @@ genrule {
         "protos/perfetto/trace/sys_stats/sys_stats.proto",
         "protos/perfetto/trace/system_info/cpu_info.proto",
         "protos/perfetto/trace/system_info/gpu_info.proto",
+        "protos/perfetto/trace/system_info/interrupt_info.proto",
         "protos/perfetto/trace/test_event.proto",
         "protos/perfetto/trace/test_extensions.proto",
         "protos/perfetto/trace/trace.proto",
@@ -12728,6 +12730,7 @@ filegroup {
     srcs: [
         "protos/perfetto/trace/system_info/cpu_info.proto",
         "protos/perfetto/trace/system_info/gpu_info.proto",
+        "protos/perfetto/trace/system_info/interrupt_info.proto",
     ],
 }
 
@@ -12745,6 +12748,7 @@ genrule {
     out: [
         "external/perfetto/protos/perfetto/trace/system_info/cpu_info.gen.cc",
         "external/perfetto/protos/perfetto/trace/system_info/gpu_info.gen.cc",
+        "external/perfetto/protos/perfetto/trace/system_info/interrupt_info.gen.cc",
     ],
 }
 
@@ -12762,6 +12766,7 @@ genrule {
     out: [
         "external/perfetto/protos/perfetto/trace/system_info/cpu_info.gen.h",
         "external/perfetto/protos/perfetto/trace/system_info/gpu_info.gen.h",
+        "external/perfetto/protos/perfetto/trace/system_info/interrupt_info.gen.h",
     ],
     export_include_dirs: [
         ".",
@@ -12775,6 +12780,7 @@ filegroup {
     srcs: [
         "protos/perfetto/trace/system_info/cpu_info.proto",
         "protos/perfetto/trace/system_info/gpu_info.proto",
+        "protos/perfetto/trace/system_info/interrupt_info.proto",
     ],
 }
 
@@ -12791,6 +12797,7 @@ genrule {
     out: [
         "external/perfetto/protos/perfetto/trace/system_info/cpu_info.pb.cc",
         "external/perfetto/protos/perfetto/trace/system_info/gpu_info.pb.cc",
+        "external/perfetto/protos/perfetto/trace/system_info/interrupt_info.pb.cc",
     ],
 }
 
@@ -12807,6 +12814,7 @@ genrule {
     out: [
         "external/perfetto/protos/perfetto/trace/system_info/cpu_info.pb.h",
         "external/perfetto/protos/perfetto/trace/system_info/gpu_info.pb.h",
+        "external/perfetto/protos/perfetto/trace/system_info/interrupt_info.pb.h",
     ],
     export_include_dirs: [
         ".",
@@ -12820,6 +12828,7 @@ filegroup {
     srcs: [
         "protos/perfetto/trace/system_info/cpu_info.proto",
         "protos/perfetto/trace/system_info/gpu_info.proto",
+        "protos/perfetto/trace/system_info/interrupt_info.proto",
     ],
 }
 
@@ -12837,6 +12846,7 @@ genrule {
     out: [
         "external/perfetto/protos/perfetto/trace/system_info/cpu_info.pbzero.cc",
         "external/perfetto/protos/perfetto/trace/system_info/gpu_info.pbzero.cc",
+        "external/perfetto/protos/perfetto/trace/system_info/interrupt_info.pbzero.cc",
     ],
 }
 
@@ -12854,6 +12864,7 @@ genrule {
     out: [
         "external/perfetto/protos/perfetto/trace/system_info/cpu_info.pbzero.h",
         "external/perfetto/protos/perfetto/trace/system_info/gpu_info.pbzero.h",
+        "external/perfetto/protos/perfetto/trace/system_info/interrupt_info.pbzero.h",
     ],
     export_include_dirs: [
         ".",
@@ -19835,6 +19846,7 @@ java_library {
         "protos/perfetto/trace/sys_stats/sys_stats.proto",
         "protos/perfetto/trace/system_info/cpu_info.proto",
         "protos/perfetto/trace/system_info/gpu_info.proto",
+        "protos/perfetto/trace/system_info/interrupt_info.proto",
         "protos/perfetto/trace/test_event.proto",
         "protos/perfetto/trace/test_extensions.proto",
         "protos/perfetto/trace/trace.proto",
